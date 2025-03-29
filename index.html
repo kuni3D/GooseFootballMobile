@@ -421,10 +421,10 @@
 
             if (player1Model) {
                 const dir1 = new THREE.Vector3();
-                if (player1Keys.w || joystick1.y < -0.2) dir1.z -= 1;
-                if (player1Keys.s || joystick1.y > 0.2) dir1.z += 1;
-                if (player1Keys.a || joystick1.x < -0.2) dir1.x -= 1;
-                if (player1Keys.d || joystick1.x > 0.2) dir1.x += 1;
+                if (player1Keys.w || joystick1.y < -0.2) dir1.x -= 1;
+                if (player1Keys.s || joystick1.y > 0.2) dir1.x += 1;
+                if (player1Keys.a || joystick1.x < -0.2) dir1.z -= 1;
+                if (player1Keys.d || joystick1.x > 0.2) dir1.z += 1;
 
                 if (dir1.length() > 0) {
                     dir1.normalize().multiplyScalar(speed);

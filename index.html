@@ -50,6 +50,7 @@
     <div class="buttons">
         <button id="resetBallButton">Reset Ball</button>
         <button id="resetGameButton">Reset Game</button>
+        <button id="fullscreenButton">Fullscreen</button>
     </div>
     <div id="joystick1" class="joystick"><div class="joystick-knob"></div></div>
     <div id="joystick2" class="joystick"><div class="joystick-knob"></div></div>
@@ -189,7 +190,24 @@
 
             document.getElementById('resetBallButton').addEventListener('click', resetBall);
             document.getElementById('resetGameButton').addEventListener('click', resetGame);
+            document.getElementById('fullscreenButton').addEventListener('click', toggleFullscreen);
             setupTouchControls();
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().then(() => {
+                    document.getElementById('fullscreenButton').textContent = 'Exit Fullscreen';
+                }).catch(err => {
+                    console.error('Error al entrar en pantalla completa:', err);
+                });
+            } else {
+                document.exitFullscreen().then(() => {
+                    document.getElementById('fullscreenButton').textContent = 'Fullscreen';
+                }).catch(err => {
+                    console.error('Error al salir de pantalla completa:', err);
+                });
+            }
         }
 
         function setupTouchControls() {
@@ -421,10 +439,10 @@
 
             if (player1Model) {
                 const dir1 = new THREE.Vector3();
-                if (player1Keys.w || joystick1.y < 0.2) dir1.x += 1;
-                if (player1Keys.s || joystick1.y > -0.2) dir1.x -= 1;
-                if (player1Keys.a || joystick1.x < 0.2) dir1.z -= 1;
-                if (player1Keys.d || joystick1.x > -0.2) dir1.z += 1;
+                if (player1Keys.w || joystick1.y < -0.2) dir1.z -= 1;
+                if (player1Keys.s || joystick1.y > 0.2) dir1.z += 1;
+                if (player1Keys.a || joystick1.x < -0.2) dir1.x -= 1;
+                if (player1Keys.d || joystick1.x > 0.2) dir1.x += 1;
 
                 if (dir1.length() > 0) {
                     dir1.normalize().multiplyScalar(speed);
@@ -455,10 +473,10 @@
 
             if (player2Model) {
                 const dir2 = new THREE.Vector3();
-                if (player2Keys.u || joystick2.y < 0.2) dir2.x += 1;
-                if (player2Keys.j || joystick2.y > -0.2) dir2.x -= 1;
-                if (player2Keys.h || joystick2.x < 0.2) dir2.z -= 1;
-                if (player2Keys.k || joystick2.x > -0.2) dir2.z += 1;
+                if (player2Keys.u || joystick2.y < -0.2) dir2.z -= 1;
+                if (player2Keys.j || joystick2.y > 0.2) dir2.z += 1;
+                if (player2Keys.h || joystick2.x < -0.2) dir2.x -= 1;
+                if (player2Keys.k || joystick2.x > 0.2) dir2.x += 1;
 
                 if (dir2.length() > 0) {
                     dir2.normalize().multiplyScalar(speed);
@@ -527,6 +545,13 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Detectar salida de pantalla completa para actualizar el botón
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                document.getElementById('fullscreenButton').textContent = 'Fullscreen';
+            }
         });
 
         init();

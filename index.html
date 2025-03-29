@@ -453,10 +453,10 @@
 
             if (player1Model) {
                 const dir1 = new THREE.Vector3();
-                if (player1Keys.w || joystick1.y < 0.2) dir1.z += 1;
-                if (player1Keys.s || joystick1.y > -0.2) dir1.z -= 1;
-                if (player1Keys.a || joystick1.x < 0.2) dir1.x -= 1;
-                if (player1Keys.d || joystick1.x > -0.2) dir1.x += 1;
+                if (player1Keys.w || joystick1.y < -0.2) dir1.z += 1;
+                if (player1Keys.s || joystick1.y > 0.2) dir1.z -= 1;
+                if (player1Keys.a || joystick1.x < -0.2) dir1.x -= 1;
+                if (player1Keys.d || joystick1.x > 0.2) dir1.x += 1;
 
                 if (dir1.length() > 0) {
                     dir1.normalize().multiplyScalar(speed);
@@ -487,10 +487,10 @@
 
             if (player2Model) {
                 const dir2 = new THREE.Vector3();
-                if (player2Keys.u || joystick2.y < 0.2) dir2.z += 1;
-                if (player2Keys.j || joystick2.y > -0.2) dir2.z -= 1;
-                if (player2Keys.h || joystick2.x < 0.2) dir2.x -= 1;
-                if (player2Keys.k || joystick2.x > -0.2) dir2.x += 1;
+                if (player2Keys.u || joystick2.y < -0.2) dir2.z += 1;
+                if (player2Keys.j || joystick2.y > 0.2) dir2.z -= 1;
+                if (player2Keys.h || joystick2.x < -0.2) dir2.x -= 1;
+                if (player2Keys.k || joystick2.x > 0.2) dir2.x += 1;
 
                 if (dir2.length() > 0) {
                     dir2.normalize().multiplyScalar(speed);

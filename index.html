@@ -56,7 +56,6 @@
 
     <script src="https://unpkg.com/three@0.134.0/build/three.min.js"></script>
     <script src="https://unpkg.com/three@0.134.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://unpkg.com/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://unpkg.com/three@0.134.0/examples/js/postprocessing/EffectComposer.js"></script>
     <script src="https://unpkg.com/three@0.134.0/examples/js/postprocessing/RenderPass.js"></script>
     <script src="https://unpkg.com/three@0.134.0/examples/js/postprocessing/ShaderPass.js"></script>
@@ -65,7 +64,7 @@
 
     <script>
         // Variables globales
-        let scene, camera, renderer, composer, clock, controls;
+        let scene, camera, renderer, composer, clock;
         let player1Model, player2Model, player1Mixer, player2Mixer;
         let ball, velocity = new THREE.Vector3(0, 0, 0);
         let team1Score = 0, team2Score = 0;
@@ -183,18 +182,10 @@
                     }
                 }
 
-                // Vista lateral del campo
+                // Cámara estática lateral
                 camera.position.set(-5, 2, 0);
                 camera.lookAt(0, 0, 0);
             });
-
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-            controls.screenSpacePanning = false;
-            controls.minDistance = 5;
-            controls.maxDistance = 20;
-            controls.maxPolarAngle = Math.PI / 2.2;
 
             document.getElementById('resetBallButton').addEventListener('click', resetBall);
             document.getElementById('resetGameButton').addEventListener('click', resetGame);
@@ -512,7 +503,6 @@
             isBallInGoal();
             updateFireworks();
 
-            controls.update();
             composer.render();
         }
 

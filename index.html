@@ -28,6 +28,17 @@
         button:hover {
             background: #e0e0e0;
         }
+        .joystick {
+            position: absolute; bottom: 20px; z-index: 2; display: none;
+            width: 100px; height: 100px; background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%; touch-action: none;
+        }
+        .joystick-knob {
+            width: 50px; height: 50px; background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%; position: absolute; top: 25px; left: 25px;
+        }
+        #joystick1 { left: 20px; }
+        #joystick2 { right: 20px; }
     </style>
 </head>
 <body>
@@ -40,6 +51,8 @@
         <button id="resetBallButton">Reset Ball</button>
         <button id="resetGameButton">Reset Game</button>
     </div>
+    <div id="joystick1" class="joystick"><div class="joystick-knob"></div></div>
+    <div id="joystick2" class="joystick"><div class="joystick-knob"></div></div>
 
     <script src="https://unpkg.com/three@0.134.0/build/three.min.js"></script>
     <script src="https://unpkg.com/three@0.134.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -67,6 +80,8 @@
         const player1Box = new THREE.Box3();
         const player2Box = new THREE.Box3();
         let particles = [];
+        let joystick1 = { active: false, x: 0, y: 0, id: null };
+        let joystick2 = { active: false, x: 0, y: 0, id: null };
 
         // Funciones
         function init() {
@@ -128,12 +143,7 @@
                 scene.add(model);
 
                 ball = model.getObjectByName('pelota');
-                if (ball) {
-                    ball.castShadow = true;
-                    console.log('Pelota cargada:', ball);
-                } else {
-                    console.error('No se encontró la pelota');
-                }
+                if (ball) ball.castShadow = true;
 
                 player1Model = model.getObjectByName('armature');
                 if (player1Model) {
@@ -146,15 +156,12 @@
                             const action = player1Mixer.clipAction(clip);
                             action.setLoop(name === 'patear' ? THREE.LoopOnce : THREE.LoopRepeat);
                             player1Model.animations[name] = action;
-                            console.log(`Animación ${name} cargada para ganzito`);
                         }
                     });
                     if (player1Model.animations['idlecomun']) {
                         player1Model.animations['idlecomun'].play();
                         player1Model.currentAction = 'idlecomun';
                     }
-                } else {
-                    console.error('No se encontró armature para ganzito');
                 }
 
                 player2Model = model.getObjectByName('armatur2');
@@ -168,21 +175,17 @@
                             const action = player2Mixer.clipAction(clip);
                             action.setLoop(name === '2patea' ? THREE.LoopOnce : THREE.LoopRepeat);
                             player2Model.animations[name] = action;
-                            console.log(`Animación ${name} cargada para ganzit2`);
                         }
                     });
                     if (player2Model.animations['2quieto']) {
                         player2Model.animations['2quieto'].play();
                         player2Model.currentAction = '2quieto';
                     }
-                } else {
-                    console.error('No se encontró armatur2 para ganzit2');
                 }
 
-                camera.position.set(0, 2.5, 7.6);
+                // Vista lateral del campo
+                camera.position.set(-5, 2, 0);
                 camera.lookAt(0, 0, 0);
-            }, undefined, (error) => {
-                console.error('Error al cargar el modelo:', error);
             });
 
             controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -195,6 +198,88 @@
 
             document.getElementById('resetBallButton').addEventListener('click', resetBall);
             document.getElementById('resetGameButton').addEventListener('click', resetGame);
+            setupTouchControls();
+        }
+
+        function setupTouchControls() {
+            const joystick1Element = document.getElementById('joystick1');
+            const joystick2Element = document.getElementById('joystick2');
+            const knob1 = joystick1Element.querySelector('.joystick-knob');
+            const knob2 = joystick2Element.querySelector('.joystick-knob');
+
+            function handleTouchStart(event) {
+                event.preventDefault();
+                for (let touch of event.changedTouches) {
+                    const touchX = touch.clientX;
+                    const touchY = touch.clientY;
+                    if (!joystick1.active && touchX < window.innerWidth / 2) {
+                        joystick1.active = true;
+                        joystick1.id = touch.identifier;
+                        joystick1Element.style.display = 'block';
+                        joystick1Element.style.left = `${touchX - 50}px`;
+                        joystick1Element.style.top = `${touchY - 50}px`;
+                    } else if (!joystick2.active && touchX > window.innerWidth / 2) {
+                        joystick2.active = true;
+                        joystick2.id = touch.identifier;
+                        joystick2Element.style.display = 'block';
+                        joystick2Element.style.left = `${touchX - 50}px`;
+                        joystick2Element.style.top = `${touchY - 50}px`;
+                    }
+                }
+            }
+
+            function handleTouchMove(event) {
+                event.preventDefault();
+                for (let touch of event.changedTouches) {
+                    if (touch.identifier === joystick1.id) {
+                        const dx = touch.clientX - (parseFloat(joystick1Element.style.left) + 50);
+                        const dy = touch.clientY - (parseFloat(joystick1Element.style.top) + 50);
+                        const dist = Math.min(50, Math.sqrt(dx * dx + dy * dy));
+                        const angle = Math.atan2(dy, dx);
+                        joystick1.x = Math.cos(angle) * dist / 50;
+                        joystick1.y = Math.sin(angle) * dist / 50;
+                        knob1.style.left = `${25 + Math.cos(angle) * dist}px`;
+                        knob1.style.top = `${25 + Math.sin(angle) * dist}px`;
+                    } else if (touch.identifier === joystick2.id) {
+                        const dx = touch.clientX - (parseFloat(joystick2Element.style.left) + 50);
+                        const dy = touch.clientY - (parseFloat(joystick2Element.style.top) + 50);
+                        const dist = Math.min(50, Math.sqrt(dx * dx + dy * dy));
+                        const angle = Math.atan2(dy, dx);
+                        joystick2.x = Math.cos(angle) * dist / 50;
+                        joystick2.y = Math.sin(angle) * dist / 50;
+                        knob2.style.left = `${25 + Math.cos(angle) * dist}px`;
+                        knob2.style.top = `${25 + Math.sin(angle) * dist}px`;
+                    }
+                }
+            }
+
+            function handleTouchEnd(event) {
+                event.preventDefault();
+                for (let touch of event.changedTouches) {
+                    if (touch.identifier === joystick1.id) {
+                        joystick1.active = false;
+                        joystick1.x = 0;
+                        joystick1.y = 0;
+                        joystick1.id = null;
+                        joystick1Element.style.display = 'none';
+                        knob1.style.left = '25px';
+                        knob1.style.top = '25px';
+                    } else if (touch.identifier === joystick2.id) {
+                        joystick2.active = false;
+                        joystick2.x = 0;
+                        joystick2.y = 0;
+                        joystick2.id = null;
+                        joystick2Element.style.display = 'none';
+                        knob2.style.left = '25px';
+                        knob2.style.top = '25px';
+                    }
+                }
+            }
+
+            document.addEventListener('touchstart', handleTouchStart);
+            document.addEventListener('touchmove', handleTouchMove);
+            document.addEventListener('touchend', handleTouchEnd);
+            document.addEventListener('touchcancel', handleTouchEnd);
         }
 
         function updateScoreboard() {
@@ -283,13 +368,13 @@
             });
         }
 
-        function checkPlayerCollision(playerModel, keys, kickKey) {
+        function checkPlayerCollision(playerModel, keys, kickKey, joystick) {
             if (!ball || !playerModel) return;
             ballBox.setFromObject(ball).expandByScalar(0.1);
             const playerBox = new THREE.Box3().setFromObject(playerModel).expandByScalar(0.08);
 
             if (ballBox.intersectsBox(playerBox)) {
-                if (keys[kickKey]) {
+                if (keys[kickKey] || (joystick.active && Math.abs(joystick.x) + Math.abs(joystick.y) > 0.8)) {
                     const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(playerModel.quaternion);
                     velocity.copy(direction.multiplyScalar(0.1));
                     velocity.y = 0.03;
@@ -310,12 +395,12 @@
                 team2Score++;
                 resetBall();
                 updateScoreboard();
-                createFireworks(0, -2.35); // Fuegos en el arco 1
+                createFireworks(0, -2.35);
             } else if (inGoal2) {
                 team1Score++;
                 resetBall();
                 updateScoreboard();
-                createFireworks(0, 2.35); // Fuegos en el arco 2
+                createFireworks(0, 2.35);
             }
         }
 
@@ -345,10 +430,10 @@
 
             if (player1Model) {
                 const dir1 = new THREE.Vector3();
-                if (player1Keys.w) dir1.z -= 1;
-                if (player1Keys.s) dir1.z += 1;
-                if (player1Keys.a) dir1.x -= 1;
-                if (player1Keys.d) dir1.x += 1;
+                if (player1Keys.w || joystick1.y < -0.2) dir1.z -= 1;
+                if (player1Keys.s || joystick1.y > 0.2) dir1.z += 1;
+                if (player1Keys.a || joystick1.x < -0.2) dir1.x -= 1;
+                if (player1Keys.d || joystick1.x > 0.2) dir1.x += 1;
 
                 if (dir1.length() > 0) {
                     dir1.normalize().multiplyScalar(speed);
@@ -379,10 +464,10 @@
 
             if (player2Model) {
                 const dir2 = new THREE.Vector3();
-                if (player2Keys.u) dir2.z -= 1;
-                if (player2Keys.j) dir2.z += 1;
-                if (player2Keys.h) dir2.x -= 1;
-                if (player2Keys.k) dir2.x += 1;
+                if (player2Keys.u || joystick2.y < -0.2) dir2.z -= 1;
+                if (player2Keys.j || joystick2.y > 0.2) dir2.z += 1;
+                if (player2Keys.h || joystick2.x < -0.2) dir2.x -= 1;
+                if (player2Keys.k || joystick2.x > 0.2) dir2.x += 1;
 
                 if (dir2.length() > 0) {
                     dir2.normalize().multiplyScalar(speed);
@@ -422,8 +507,8 @@
             }
 
             checkCollisions();
-            checkPlayerCollision(player1Model, player1Keys, 't');
-            checkPlayerCollision(player2Model, player2Keys, 'p');
+            checkPlayerCollision(player1Model, player1Keys, 't', joystick1);
+            checkPlayerCollision(player2Model, player2Keys, 'p', joystick2);
             isBallInGoal();
             updateFireworks();
 
@@ -431,7 +516,6 @@
             composer.render();
         }
 
-        // Event Listeners
         window.addEventListener('keydown', (e) => {
             const key = e.key.toLowerCase();
             if ('wasd'.includes(key)) player1Keys[key] = true;
@@ -455,7 +539,6 @@
             composer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Inicio
         init();
         animate();
     </script>

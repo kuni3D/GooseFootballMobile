@@ -51,7 +51,6 @@
     <div class="buttons">
         <button id="resetBallButton">Reset Ball</button>
         <button id="resetGameButton">Reset Game</button>
-        <!-- Quitamos el botón Fullscreen -->
     </div>
     <div id="joystick1" class="joystick"><div class="joystick-knob"></div></div>
     <div id="joystick2" class="joystick"><div class="joystick-knob"></div></div>
@@ -83,6 +82,7 @@
         let particles = [];
         let joystick1 = { active: false, x: 0, y: 0, id: null };
         let joystick2 = { active: false, x: 0, y: 0, id: null };
+        let exitPortalBox; // Caja de colisión para el portal
 
         // Funciones
         function init() {
@@ -188,11 +188,104 @@
                 camera.lookAt(0, 0, 0);
             });
 
+            // Crear el portal en el lado derecho de la cancha
+            createExitPortal();
+
             document.getElementById('resetBallButton').addEventListener('click', resetBall);
             document.getElementById('resetBallButton').addEventListener('touchend', resetBall);
             document.getElementById('resetGameButton').addEventListener('click', resetGame);
             document.getElementById('resetGameButton').addEventListener('touchend', resetGame);
             setupTouchControls();
+        }
+
+        function createExitPortal() {
+            const exitPortalGroup = new THREE.Group();
+            exitPortalGroup.position.set(2, 0.5, 0); // Lado derecho de la cancha
+            exitPortalGroup.rotation.x = 0.35;
+            exitPortalGroup.rotation.y = 0;
+
+            const exitPortalGeometry = new THREE.TorusGeometry(0.5, 0.1, 16, 100); // Tamaño reducido
+            const exitPortalMaterial = new THREE.MeshPhongMaterial({
+                color: 0x00ff00,
+                emissive: 0x00ff00,
+                transparent: true,
+                opacity: 0.8
+            });
+            const exitPortal = new THREE.Mesh(exitPortalGeometry, exitPortalMaterial);
+            exitPortalGroup.add(exitPortal);
+
+            const exitPortalInnerGeometry = new THREE.CircleGeometry(0.4, 32); // Tamaño reducido
+            const exitPortalInnerMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ff00,
+                transparent: true,
+                opacity: 0.5,
+                side: THREE.DoubleSide
+            });
+            const exitPortalInner = new THREE.Mesh(exitPortalInnerGeometry, exitPortalInnerMaterial);
+            exitPortalGroup.add(exitPortalInner);
+
+            const loader = new THREE.TextureLoader();
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 256;
+            canvas.height = 32;
+            context.fillStyle = '#00ff00';
+            context.font = 'bold 16px Arial';
+            context.textAlign = 'center';
+            context.fillText('EXIT PORTAL', canvas.width/2, canvas.height/2);
+            const texture = new THREE.CanvasTexture(canvas);
+            const labelGeometry = new THREE.PlaneGeometry(1, 0.2); // Tamaño reducido
+            const labelMaterial = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true,
+                side: THREE.DoubleSide
+            });
+            const label = new THREE.Mesh(labelGeometry, labelMaterial);
+            label.position.y = 0.7;
+            exitPortalGroup.add(label);
+
+            const exitPortalParticleCount = 200; // Menos partículas para rendimiento
+            const exitPortalParticles = new THREE.BufferGeometry();
+            const exitPortalPositions = new Float32Array(exitPortalParticleCount * 3);
+            const exitPortalColors = new Float32Array(exitPortalParticleCount * 3);
+
+            for (let i = 0; i < exitPortalParticleCount * 3; i += 3) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = 0.5 + (Math.random() - 0.5) * 0.2;
+                exitPortalPositions[i] = Math.cos(angle) * radius;
+                exitPortalPositions[i + 1] = Math.sin(angle) * radius;
+                exitPortalPositions[i + 2] = (Math.random() - 0.5) * 0.2;
+
+                exitPortalColors[i] = 0;
+                exitPortalColors[i + 1] = 0.8 + Math.random() * 0.2;
+                exitPortalColors[i + 2] = 0;
+            }
+
+            exitPortalParticles.setAttribute('position', new THREE.BufferAttribute(exitPortalPositions, 3));
+            exitPortalParticles.setAttribute('color', new THREE.BufferAttribute(exitPortalColors, 3));
+
+            const exitPortalParticleMaterial = new THREE.PointsMaterial({
+                size: 0.05, // Tamaño reducido
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            const exitPortalParticleSystem = new THREE.Points(exitPortalParticles, exitPortalParticleMaterial);
+            exitPortalGroup.add(exitPortalParticleSystem);
+
+            scene.add(exitPortalGroup);
+            exitPortalBox = new THREE.Box3().setFromObject(exitPortalGroup);
+
+            function animateExitPortal() {
+                const positions = exitPortalParticles.attributes.position.array;
+                for (let i = 0; i < positions.length; i += 3) {
+                    positions[i + 1] += 0.02 * Math.sin(Date.now() * 0.001 + i);
+                }
+                exitPortalParticles.attributes.position.needsUpdate = true;
+                requestAnimationFrame(animateExitPortal);
+            }
+            animateExitPortal();
         }
 
         function setupTouchControls() {
@@ -222,7 +315,7 @@
                     }
 
                     const j2Rect = joystick2Element.getBoundingClientRect();
-                    if (touchX >= j2Rect.left && touchX <= j2Rect.right && touchY >= j2Rect.top && touchY <= j2Rect.bottom) {
+                    if (touchX >= j2Rect.left && touchX <= j2Rect.right && touchY >= j1Rect.top && touchY <= j2Rect.bottom) {
                         event.preventDefault();
                         joystick2.active = true;
                         joystick2.id = touch.identifier;
@@ -289,7 +382,7 @@
         }
 
         function updateScoreboard() {
-            scoreboard.textContent = `TEAM #1: ${team1Score} - TEAM #2: ${team2Score}`; // Mantenemos TEAM #1 y TEAM #2
+            scoreboard.textContent = `TEAM #1: ${team1Score} - TEAM #2: ${team2Score}`;
         }
 
         function createFireworks(x, z) {
@@ -466,6 +559,12 @@
                         player1Model.currentAction = 'idlecomun';
                     }, { once: true });
                 }
+
+                // Verificar colisión con el portal (jugador 1)
+                const player1Box = new THREE.Box3().setFromObject(player1Model);
+                if (exitPortalBox && player1Box.intersectsBox(exitPortalBox)) {
+                    window.location.href = 'https://portal.pieter.com?portal=true';
+                }
             }
 
             if (player2Model) {
@@ -499,6 +598,12 @@
                         player2Model.animations['2quieto']?.reset().play();
                         player2Model.currentAction = '2quieto';
                     }, { once: true });
+                }
+
+                // Verificar colisión con el portal (jugador 2)
+                const player2Box = new THREE.Box3().setFromObject(player2Model);
+                if (exitPortalBox && player2Box.intersectsBox(exitPortalBox)) {
+                    window.location.href = 'https://portal.pieter.com?portal=true';
                 }
             }
 

@@ -200,9 +200,9 @@
 
         function createExitPortal() {
             const exitPortalGroup = new THREE.Group();
-            exitPortalGroup.position.set(10, 0.5, 0); // Lado derecho de la cancha
+            exitPortalGroup.position.set(2, 0.5, 10); // Lado derecho de la cancha
             exitPortalGroup.rotation.x = 0.35;
-            exitPortalGroup.rotation.y = 1;
+            exitPortalGroup.rotation.y = 1.25;
 
             const exitPortalGeometry = new THREE.TorusGeometry(0.5, 0.1, 16, 100); // Tamaño reducido
             const exitPortalMaterial = new THREE.MeshPhongMaterial({

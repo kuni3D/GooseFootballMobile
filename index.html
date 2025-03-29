@@ -29,7 +29,7 @@
             background: #e0e0e0;
         }
         .joystick {
-            position: absolute; bottom: 20px; z-index: 2; display: none;
+            position: absolute; bottom: 20px; z-index: 2; /* Quitamos display: none para que siempre estén visibles */
             width: 100px; height: 100px; background: rgba(255, 255, 255, 0.2);
             border-radius: 50%; touch-action: none;
         }
@@ -37,8 +37,8 @@
             width: 50px; height: 50px; background: rgba(255, 255, 255, 0.5);
             border-radius: 50%; position: absolute; top: 25px; left: 25px;
         }
-        #joystick1 { left: 20px; }
-        #joystick2 { right: 20px; }
+        #joystick1 { left: 20px; } /* Fijo a la izquierda */
+        #joystick2 { right: 20px; } /* Fijo a la derecha */
     </style>
 </head>
 <body>
@@ -221,18 +221,17 @@
                 for (let touch of event.changedTouches) {
                     const touchX = touch.clientX;
                     const touchY = touch.clientY;
-                    if (!joystick1.active && touchX < window.innerWidth / 2) {
+                    // Verificar si el toque está dentro del área del joystick1
+                    const j1Rect = joystick1Element.getBoundingClientRect();
+                    if (touchX >= j1Rect.left && touchX <= j1Rect.right && touchY >= j1Rect.top && touchY <= j1Rect.bottom) {
                         joystick1.active = true;
                         joystick1.id = touch.identifier;
-                        joystick1Element.style.display = 'block';
-                        joystick1Element.style.left = `${touchX - 50}px`;
-                        joystick1Element.style.top = `${touchY - 50}px`;
-                    } else if (!joystick2.active && touchX > window.innerWidth / 2) {
+                    }
+                    // Verificar si el toque está dentro del área del joystick2
+                    const j2Rect = joystick2Element.getBoundingClientRect();
+                    if (touchX >= j2Rect.left && touchX <= j2Rect.right && touchY >= j2Rect.top && touchY <= j2Rect.bottom) {
                         joystick2.active = true;
                         joystick2.id = touch.identifier;
-                        joystick2Element.style.display = 'block';
-                        joystick2Element.style.left = `${touchX - 50}px`;
-                        joystick2Element.style.top = `${touchY - 50}px`;
                     }
                 }
             }
@@ -241,8 +240,9 @@
                 event.preventDefault();
                 for (let touch of event.changedTouches) {
                     if (touch.identifier === joystick1.id) {
-                        const dx = touch.clientX - (parseFloat(joystick1Element.style.left) + 50);
-                        const dy = touch.clientY - (parseFloat(joystick1Element.style.top) + 50);
+                        const j1Rect = joystick1Element.getBoundingClientRect();
+                        const dx = touch.clientX - (j1Rect.left + 50);
+                        const dy = touch.clientY - (j1Rect.top + 50);
                         const dist = Math.min(50, Math.sqrt(dx * dx + dy * dy));
                         const angle = Math.atan2(dy, dx);
                         joystick1.x = Math.cos(angle) * dist / 50;
@@ -250,8 +250,9 @@
                         knob1.style.left = `${25 + Math.cos(angle) * dist}px`;
                         knob1.style.top = `${25 + Math.sin(angle) * dist}px`;
                     } else if (touch.identifier === joystick2.id) {
-                        const dx = touch.clientX - (parseFloat(joystick2Element.style.left) + 50);
-                        const dy = touch.clientY - (parseFloat(joystick2Element.style.top) + 50);
+                        const j2Rect = joystick2Element.getBoundingClientRect();
+                        const dx = touch.clientX - (j2Rect.left + 50);
+                        const dy = touch.clientY - (j2Rect.top + 50);
                         const dist = Math.min(50, Math.sqrt(dx * dx + dy * dy));
                         const angle = Math.atan2(dy, dx);
                         joystick2.x = Math.cos(angle) * dist / 50;
@@ -270,7 +271,6 @@
                         joystick1.x = 0;
                         joystick1.y = 0;
                         joystick1.id = null;
-                        joystick1Element.style.display = 'none';
                         knob1.style.left = '25px';
                         knob1.style.top = '25px';
                     } else if (touch.identifier === joystick2.id) {
@@ -278,7 +278,6 @@
                         joystick2.x = 0;
                         joystick2.y = 0;
                         joystick2.id = null;
-                        joystick2Element.style.display = 'none';
                         knob2.style.left = '25px';
                         knob2.style.top = '25px';
                     }
@@ -547,7 +546,6 @@
             composer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Detectar salida de pantalla completa para actualizar el botón
         document.addEventListener('fullscreenchange', () => {
             if (!document.fullscreenElement) {
                 document.getElementById('fullscreenButton').textContent = 'Fullscreen';

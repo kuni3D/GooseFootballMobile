@@ -24,7 +24,7 @@
             padding: 5px 10px; font-size: 16px; background: #ffffff;
             border: none; border-radius: 5px; cursor: pointer;
             pointer-events: auto;
-            touch-action: manipulation; /* Mejora la interacción táctil */
+            touch-action: manipulation;
         }
         button:hover {
             background: #e0e0e0;
@@ -51,7 +51,7 @@
     <div class="buttons">
         <button id="resetBallButton">Reset Ball</button>
         <button id="resetGameButton">Reset Game</button>
-        <button id="fullscreenButton">Fullscreen</button>
+        <!-- Quitamos el botón Fullscreen -->
     </div>
     <div id="joystick1" class="joystick"><div class="joystick-knob"></div></div>
     <div id="joystick2" class="joystick"><div class="joystick-knob"></div></div>
@@ -189,29 +189,10 @@
             });
 
             document.getElementById('resetBallButton').addEventListener('click', resetBall);
-            document.getElementById('resetBallButton').addEventListener('touchend', resetBall); // Soporte táctil
+            document.getElementById('resetBallButton').addEventListener('touchend', resetBall);
             document.getElementById('resetGameButton').addEventListener('click', resetGame);
-            document.getElementById('resetGameButton').addEventListener('touchend', resetGame); // Soporte táctil
-            document.getElementById('fullscreenButton').addEventListener('click', toggleFullscreen);
-            document.getElementById('fullscreenButton').addEventListener('touchend', toggleFullscreen); // Soporte táctil
+            document.getElementById('resetGameButton').addEventListener('touchend', resetGame);
             setupTouchControls();
-        }
-
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().then(() => {
-                    document.getElementById('fullscreenButton').textContent = 'Exit Fullscreen';
-                }).catch(err => {
-                    console.error('Error al entrar en pantalla completa:', err);
-                    alert('No se pudo activar pantalla completa. Usa el botón del navegador si está disponible.');
-                });
-            } else {
-                document.exitFullscreen().then(() => {
-                    document.getElementById('fullscreenButton').textContent = 'Fullscreen';
-                }).catch(err => {
-                    console.error('Error al salir de pantalla completa:', err);
-                });
-            }
         }
 
         function setupTouchControls() {
@@ -230,7 +211,7 @@
                     const buttonsRect = buttonsContainer.getBoundingClientRect();
                     if (touchY >= buttonsRect.top && touchY <= buttonsRect.bottom &&
                         touchX >= buttonsRect.left && touchX <= buttonsRect.right) {
-                        return; // Deja que el evento llegue al botón
+                        return;
                     }
 
                     const j1Rect = joystick1Element.getBoundingClientRect();
@@ -308,7 +289,7 @@
         }
 
         function updateScoreboard() {
-            scoreboard.textContent = `Equipo 1: ${team1Score} - Equipo 2: ${team2Score}`;
+            scoreboard.textContent = `TEAM #1: ${team1Score} - TEAM #2: ${team2Score}`; // Mantenemos TEAM #1 y TEAM #2
         }
 
         function createFireworks(x, z) {
@@ -561,12 +542,6 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement) {
-                document.getElementById('fullscreenButton').textContent = 'Fullscreen';
-            }
         });
 
         init();

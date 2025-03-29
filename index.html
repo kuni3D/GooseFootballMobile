@@ -18,18 +18,19 @@
         }
         .buttons {
             position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
-            z-index: 2; display: flex; gap: 10px; /* Subimos el z-index */
+            z-index: 2; display: flex; gap: 10px;
         }
         button {
             padding: 5px 10px; font-size: 16px; background: #ffffff;
             border: none; border-radius: 5px; cursor: pointer;
-            pointer-events: auto; /* Aseguramos que los botones reciban eventos */
+            pointer-events: auto;
+            touch-action: manipulation; /* Mejora la interacción táctil */
         }
         button:hover {
             background: #e0e0e0;
         }
         .joystick {
-            position: absolute; bottom: 20px; z-index: 1; /* z-index menor que los botones */
+            position: absolute; bottom: 20px; z-index: 1;
             width: 100px; height: 100px; background: rgba(255, 255, 255, 0.2);
             border-radius: 50%; touch-action: none;
         }
@@ -188,8 +189,11 @@
             });
 
             document.getElementById('resetBallButton').addEventListener('click', resetBall);
+            document.getElementById('resetBallButton').addEventListener('touchend', resetBall); // Soporte táctil
             document.getElementById('resetGameButton').addEventListener('click', resetGame);
+            document.getElementById('resetGameButton').addEventListener('touchend', resetGame); // Soporte táctil
             document.getElementById('fullscreenButton').addEventListener('click', toggleFullscreen);
+            document.getElementById('fullscreenButton').addEventListener('touchend', toggleFullscreen); // Soporte táctil
             setupTouchControls();
         }
 
@@ -199,6 +203,7 @@
                     document.getElementById('fullscreenButton').textContent = 'Exit Fullscreen';
                 }).catch(err => {
                     console.error('Error al entrar en pantalla completa:', err);
+                    alert('No se pudo activar pantalla completa. Usa el botón del navegador si está disponible.');
                 });
             } else {
                 document.exitFullscreen().then(() => {
@@ -222,25 +227,22 @@
                     const touchX = touch.clientX;
                     const touchY = touch.clientY;
 
-                    // Verificar si el toque está en los botones
                     const buttonsRect = buttonsContainer.getBoundingClientRect();
                     if (touchY >= buttonsRect.top && touchY <= buttonsRect.bottom &&
                         touchX >= buttonsRect.left && touchX <= buttonsRect.right) {
-                        return; // No hacemos nada, dejamos que el evento pase al botón
+                        return; // Deja que el evento llegue al botón
                     }
 
-                    // Verificar si el toque está dentro del área del joystick1
                     const j1Rect = joystick1Element.getBoundingClientRect();
                     if (touchX >= j1Rect.left && touchX <= j1Rect.right && touchY >= j1Rect.top && touchY <= j1Rect.bottom) {
-                        event.preventDefault(); // Solo prevenimos para los joysticks
+                        event.preventDefault();
                         joystick1.active = true;
                         joystick1.id = touch.identifier;
                     }
 
-                    // Verificar si el toque está dentro del área del joystick2
                     const j2Rect = joystick2Element.getBoundingClientRect();
                     if (touchX >= j2Rect.left && touchX <= j2Rect.right && touchY >= j2Rect.top && touchY <= j2Rect.bottom) {
-                        event.preventDefault(); // Solo prevenimos para los joysticks
+                        event.preventDefault();
                         joystick2.active = true;
                         joystick2.id = touch.identifier;
                     }
@@ -453,10 +455,10 @@
 
             if (player1Model) {
                 const dir1 = new THREE.Vector3();
-                if (player1Keys.w || joystick1.y < 0.2) dir1.z += 1;
-                if (player1Keys.s || joystick1.y > -0.2) dir1.z -= 1;
-                if (player1Keys.a || joystick1.x < -0.2) dir1.x -= 1;
-                if (player1Keys.d || joystick1.x > 0.2) dir1.x += 1;
+                if (player1Keys.w || joystick1.y < 0.2) dir1.x += 1;
+                if (player1Keys.s || joystick1.y > -0.2) dir1.x -= 1;
+                if (player1Keys.a || joystick1.x < 0.2) dir1.z -= 1;
+                if (player1Keys.d || joystick1.x > -0.2) dir1.z += 1;
 
                 if (dir1.length() > 0) {
                     dir1.normalize().multiplyScalar(speed);
@@ -487,10 +489,10 @@
 
             if (player2Model) {
                 const dir2 = new THREE.Vector3();
-                if (player2Keys.u || joystick2.y < 0.2) dir2.z += 1;
-                if (player2Keys.j || joystick2.y > -0.2) dir2.z -= 1;
-                if (player2Keys.h || joystick2.x < -0.2) dir2.x -= 1;
-                if (player2Keys.k || joystick2.x > 0.2) dir2.x += 1;
+                if (player2Keys.u || joystick2.y < 0.2) dir2.x += 1;
+                if (player2Keys.j || joystick2.y > -0.2) dir2.x -= 1;
+                if (player2Keys.h || joystick2.x < 0.2) dir2.z -= 1;
+                if (player2Keys.k || joystick2.x > -0.2) dir2.z += 1;
 
                 if (dir2.length() > 0) {
                     dir2.normalize().multiplyScalar(speed);

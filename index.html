@@ -18,18 +18,18 @@
         }
         .buttons {
             position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
-            z-index: 1; display: flex; gap: 10px;
+            z-index: 2; display: flex; gap: 10px; /* Subimos el z-index */
         }
         button {
             padding: 5px 10px; font-size: 16px; background: #ffffff;
             border: none; border-radius: 5px; cursor: pointer;
-            pointer-events: auto;
+            pointer-events: auto; /* Aseguramos que los botones reciban eventos */
         }
         button:hover {
             background: #e0e0e0;
         }
         .joystick {
-            position: absolute; bottom: 20px; z-index: 2; /* Quitamos display: none para que siempre estén visibles */
+            position: absolute; bottom: 20px; z-index: 1; /* z-index menor que los botones */
             width: 100px; height: 100px; background: rgba(255, 255, 255, 0.2);
             border-radius: 50%; touch-action: none;
         }
@@ -37,8 +37,8 @@
             width: 50px; height: 50px; background: rgba(255, 255, 255, 0.5);
             border-radius: 50%; position: absolute; top: 25px; left: 25px;
         }
-        #joystick1 { left: 20px; } /* Fijo a la izquierda */
-        #joystick2 { right: 20px; } /* Fijo a la derecha */
+        #joystick1 { left: 20px; }
+        #joystick2 { right: 20px; }
     </style>
 </head>
 <body>
@@ -183,7 +183,6 @@
                     }
                 }
 
-                // Cámara estática lateral
                 camera.position.set(-5, 2, 0);
                 camera.lookAt(0, 0, 0);
             });
@@ -215,21 +214,33 @@
             const joystick2Element = document.getElementById('joystick2');
             const knob1 = joystick1Element.querySelector('.joystick-knob');
             const knob2 = joystick2Element.querySelector('.joystick-knob');
+            const buttonsContainer = document.querySelector('.buttons');
 
             function handleTouchStart(event) {
-                event.preventDefault();
-                for (let touch of event.changedTouches) {
+                const touches = event.changedTouches;
+                for (let touch of touches) {
                     const touchX = touch.clientX;
                     const touchY = touch.clientY;
+
+                    // Verificar si el toque está en los botones
+                    const buttonsRect = buttonsContainer.getBoundingClientRect();
+                    if (touchY >= buttonsRect.top && touchY <= buttonsRect.bottom &&
+                        touchX >= buttonsRect.left && touchX <= buttonsRect.right) {
+                        return; // No hacemos nada, dejamos que el evento pase al botón
+                    }
+
                     // Verificar si el toque está dentro del área del joystick1
                     const j1Rect = joystick1Element.getBoundingClientRect();
                     if (touchX >= j1Rect.left && touchX <= j1Rect.right && touchY >= j1Rect.top && touchY <= j1Rect.bottom) {
+                        event.preventDefault(); // Solo prevenimos para los joysticks
                         joystick1.active = true;
                         joystick1.id = touch.identifier;
                     }
+
                     // Verificar si el toque está dentro del área del joystick2
                     const j2Rect = joystick2Element.getBoundingClientRect();
                     if (touchX >= j2Rect.left && touchX <= j2Rect.right && touchY >= j2Rect.top && touchY <= j2Rect.bottom) {
+                        event.preventDefault(); // Solo prevenimos para los joysticks
                         joystick2.active = true;
                         joystick2.id = touch.identifier;
                     }
@@ -237,9 +248,10 @@
             }
 
             function handleTouchMove(event) {
-                event.preventDefault();
-                for (let touch of event.changedTouches) {
+                const touches = event.changedTouches;
+                for (let touch of touches) {
                     if (touch.identifier === joystick1.id) {
+                        event.preventDefault();
                         const j1Rect = joystick1Element.getBoundingClientRect();
                         const dx = touch.clientX - (j1Rect.left + 50);
                         const dy = touch.clientY - (j1Rect.top + 50);
@@ -250,6 +262,7 @@
                         knob1.style.left = `${25 + Math.cos(angle) * dist}px`;
                         knob1.style.top = `${25 + Math.sin(angle) * dist}px`;
                     } else if (touch.identifier === joystick2.id) {
+                        event.preventDefault();
                         const j2Rect = joystick2Element.getBoundingClientRect();
                         const dx = touch.clientX - (j2Rect.left + 50);
                         const dy = touch.clientY - (j2Rect.top + 50);
@@ -264,9 +277,10 @@
             }
 
             function handleTouchEnd(event) {
-                event.preventDefault();
-                for (let touch of event.changedTouches) {
+                const touches = event.changedTouches;
+                for (let touch of touches) {
                     if (touch.identifier === joystick1.id) {
+                        event.preventDefault();
                         joystick1.active = false;
                         joystick1.x = 0;
                         joystick1.y = 0;
@@ -274,6 +288,7 @@
                         knob1.style.left = '25px';
                         knob1.style.top = '25px';
                     } else if (touch.identifier === joystick2.id) {
+                        event.preventDefault();
                         joystick2.active = false;
                         joystick2.x = 0;
                         joystick2.y = 0;
@@ -284,10 +299,10 @@
                 }
             }
 
-            document.addEventListener('touchstart', handleTouchStart);
-            document.addEventListener('touchmove', handleTouchMove);
-            document.addEventListener('touchend', handleTouchEnd);
-            document.addEventListener('touchcancel', handleTouchEnd);
+            document.addEventListener('touchstart', handleTouchStart, { passive: false });
+            document.addEventListener('touchmove', handleTouchMove, { passive: false });
+            document.addEventListener('touchend', handleTouchEnd, { passive: false });
+            document.addEventListener('touchcancel', handleTouchEnd, { passive: false });
         }
 
         function updateScoreboard() {
@@ -438,10 +453,10 @@
 
             if (player1Model) {
                 const dir1 = new THREE.Vector3();
-                if (player1Keys.w || joystick1.y < -0.2) dir1.z -= 1;
-                if (player1Keys.s || joystick1.y > 0.2) dir1.z += 1;
-                if (player1Keys.a || joystick1.x < -0.2) dir1.x -= 1;
-                if (player1Keys.d || joystick1.x > 0.2) dir1.x += 1;
+                if (player1Keys.w || joystick1.y < 0.2) dir1.z += 1;
+                if (player1Keys.s || joystick1.y > -0.2) dir1.z -= 1;
+                if (player1Keys.a || joystick1.x < 0.2) dir1.x -= 1;
+                if (player1Keys.d || joystick1.x > -0.2) dir1.x += 1;
 
                 if (dir1.length() > 0) {
                     dir1.normalize().multiplyScalar(speed);
@@ -472,10 +487,10 @@
 
             if (player2Model) {
                 const dir2 = new THREE.Vector3();
-                if (player2Keys.u || joystick2.y < -0.2) dir2.z -= 1;
-                if (player2Keys.j || joystick2.y > 0.2) dir2.z += 1;
-                if (player2Keys.h || joystick2.x < -0.2) dir2.x -= 1;
-                if (player2Keys.k || joystick2.x > 0.2) dir2.x += 1;
+                if (player2Keys.u || joystick2.y < 0.2) dir2.z += 1;
+                if (player2Keys.j || joystick2.y > -0.2) dir2.z -= 1;
+                if (player2Keys.h || joystick2.x < 0.2) dir2.x -= 1;
+                if (player2Keys.k || joystick2.x > -0.2) dir2.x += 1;
 
                 if (dir2.length() > 0) {
                     dir2.normalize().multiplyScalar(speed);
